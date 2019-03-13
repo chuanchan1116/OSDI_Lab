@@ -15,6 +15,11 @@ setup: setup.s
 	@$(LD) $(LDFLAGS) -o setup setup.o
 	@objcopy -R .pdr -R .comment -R.note -S -O binary setup
 
+hello: hello.s
+	@$(AS) -o hello.o hello.s
+	@$(LD) $(LDFLAGS) -o hello hello.o
+	@objcopy -R .pdr -R .comment -R.note -S -O binary hello
+
 head.o: head.s
 	@$(AS) -o head.o head.s
 
