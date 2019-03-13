@@ -62,12 +62,55 @@ go:	mov	%cs, %ax
 	mov	%ax, %ss
 	mov	$0xFF00, %sp		# arbitrary value >>512
 
+# ###### lab2 #######
+
+boot_menu:
+	xor %bh, %bh
+	mov $0x03, %ah
+	int $0x10
+
+	mov $50, %cx
+	mov $0x0007, %bx
+	mov $bootmsg, %bp
+	mov $0x1301, %ax
+	int $0x10
+
+read_keystroke:
+	mov $0x0000, %ax
+	int $0x16
+	cmp $0x2, %ah
+	je  load_setup
+	cmp $0x3, %ah
+	je  load_hello
+	jmp read_keystroke
+
+load_hello:
+	mov $0x0000, %dx
+	mov $0x0002, %cx
+	mov $0x0000, %bx
+	mov $0x0100, %ax
+	mov %ax, %es
+	mov $0x0201, %ax
+	int $0x13
+	jnc ok_load_hello
+	mov $0x0000, %dx
+	mov $0x0000, %ax
+	int $0x13
+	jmp load_hello
+
+ok_load_hello:
+    .equ sel_cs0, 0x0100 #select for code segment 0
+    ljmp $sel_cs0, $0 #Jump to hello
+    # cpu will not return here
+
+# ###### lab2 #######
+
 # load the setup-sectors directly after the bootblock.
 # Note that 'es' is already set up.
 
 load_setup:
 	mov	$0x0000, %dx		# drive 0, head 0
-	mov	$0x0002, %cx		# sector 2, track 0
+	mov	$0x0003, %cx		# sector 2, track 0
 	mov	$0x0200, %bx		# address = 512, in INITSEG
 	.equ    AX, 0x0200+SETUPLEN
 	mov     $AX, %ax		# service 2, nr of sectors
@@ -147,7 +190,7 @@ root_defined:
 #
 # in:	es - starting address segment (normally 0x1000)
 #
-sread:	.word 1+ SETUPLEN	# sectors read of current track
+sread:	.word 2+ SETUPLEN	# sectors read of current track
 head:	.word 0			# current head
 track:	.word 0			# current track
 
@@ -248,6 +291,11 @@ msg1:
 	.byte 13,10
 	.ascii "Loading system ..."
 	.byte 13,10,13,10
+
+bootmsg:
+	.byte 13,10
+	.ascii "Press 1 to boot Linux, 2 to boot hello world"
+	.byte 13,10
 
 	.org 508
 root_dev:
